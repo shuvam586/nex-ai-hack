@@ -3,6 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { CategoryOverrides } from "@/components/CategoryOverrides";
 import { useSimStore, useTiers } from "@/store/useSimStore";
@@ -49,7 +50,10 @@ export function ControlsRail() {
 
   return (
     <aside className="w-full shrink-0 border-b bg-card p-4 lg:w-72 lg:border-r lg:border-b-0">
-      <h2 className="text-sm font-semibold">Markdown rule</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-sm font-semibold">Markdown rule</h2>
+        {overridesEnabled ? <Badge variant="secondary">Per-category</Badge> : null}
+      </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Discount a batch when it is this close to expiring.
       </p>

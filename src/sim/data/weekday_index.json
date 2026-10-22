@@ -1,4 +1,14 @@
 {
-  "source": "grocery prior (assumed) - UCI Online Retail II not ingested yet",
-  "monToSun": null
+  "source": "UCI Online Retail II (gift-ware wholesaler; B2B proxy)",
+  "monToSun": [
+    1.203,
+    1.149,
+    1.086,
+    1.269,
+    0.943,
+    0.764,
+    0.585
+  ],
+  "accessDate": "2026-10-22",
+  "note": "Saturday imputed from the mean of Friday and Sunday \u2014 the source trades only marginally on Saturdays (a few B2B orders), which is not representative of a grocery week. Blended 50/50 with the grocery prior in weekday.ts."
 }

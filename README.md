@@ -12,10 +12,10 @@ and margin.
 
 Everything is seeded: the same seed gives the same numbers on any machine.
 
-> **Status:** the simulation core (plans/01) and the app architecture (plans/02)
-> are complete and tested. The dashboard runs live numbers from the worker.
-> The charts and tabs of plans/03, the stretch goals of plans/04 and the
-> deploy/demo pack of plans/05 are not built yet.
+> **Status:** the simulation core (plans/01), the app (plans/02), every
+> dashboard tab (plans/03) and the stretch goals (plans/04) are built and
+> tested — including the real UCI weekday shape. The deploy/demo pack
+> (plans/05) is the remaining item.
 
 ---
 
@@ -49,14 +49,21 @@ src/sim/            pure TypeScript, no React, no DOM (runs in Node and in a wor
   engine.ts         the daily loop
   metrics.ts        accounting and aggregation
   runner.ts         runSim, runSeeds, comparePolicies
+  tradeoff.ts       the blanket point and discount sweep for the hero chart
+  sensitivity.ts    the assumption sweep behind the tornado chart
+  optimizer.ts      best two-step rule per category, train/test split
   api.ts            the surface the UI calls
   worker.ts         Comlink entry point
+  data/weekday_index.json   the UCI weekday shape (scripts/build_weekday_index.py)
   mock.ts           a hand-made result for building the UI against
 src/store/          useSimStore — zustand store, worker wiring, URL sync
-src/lib/            format.ts (view-layer numbers), urlState.ts, kpis.ts, assumptions.ts
-src/components/     TopBar, ControlsRail, KpiPair, VerdictBanner, Dashboard, …
-src/app/            the dashboard route, layout, palette and favicon
-tests/              Vitest: units, invariants, calibration, performance, the store
+src/lib/            format.ts, urlState.ts, kpis.ts, chartTheme.ts, assumptions.ts
+src/components/     TopBar, ControlsRail, KpiPair, VerdictBanner, the Overview
+                    charts, ProductsTab, TimelineTab, RobustnessTab, OptimizeTab,
+                    DealsView, …
+src/app/            the dashboard route (/), the deals route (/deals), layout, palette
+scripts/            build_weekday_index.py — UCI Online Retail II → weekday_index.json
+tests/              Vitest: units, invariants, calibration, performance, store, optimizer
 docs/               the plan files this repo was built from
 ```
 
@@ -85,12 +92,12 @@ All numbers below are **10-seed means (seeds 1–10)**, produced by
 
 | | Waste % | Net margin % | Stock-out % |
 |---|---|---|---|
-| **Overall** | **7.06** | **39.12** | **2.15** |
-| Bakery | 9.3 | 38.4 | 1.7 |
-| Dairy | 3.0 | 40.1 | 2.0 |
-| Produce | 7.5 | 38.6 | 1.9 |
-| Meat & Fish | 7.3 | 39.2 | 3.1 |
-| Deli | 8.8 | 39.6 | 2.8 |
+| **Overall** | **7.02** | **39.07** | **2.16** |
+| Bakery | 8.9 | 38.5 | 1.9 |
+| Dairy | 2.9 | 40.2 | 2.3 |
+| Produce | 7.5 | 38.5 | 1.8 |
+| Meat & Fish | 7.8 | 38.9 | 3.0 |
+| Deli | 8.9 | 39.6 | 2.5 |
 
 Waste is highest for short-life bakery and deli items and lowest for dairy,
 which is what the calibration targets in plans/01 §10 ask for.
@@ -99,20 +106,20 @@ which is what the calibration targets in plans/01 §10 ask for.
 
 | Policy | Waste % | Net margin % | Stock-out % | Units sold at markdown | Revenue |
 |---|---|---|---|---|---|
-| Fixed price | 7.06 | 39.12 | 2.15 | 0% | $322,083 |
-| **Markdown (≤2 days 20%, ≤1 day 40%)** | **0.05** | **40.88** | 4.28 | 15.4% | $333,539 |
-| Blanket 30% off | 0.02 | **19.30** | 9.40 | 100% | $272,567 |
-| Markdown, half shopper response | 0.58 | 40.38 | 3.65 | 14.8% | $327,022 |
-| Blanket, half shopper response | 0.56 | 18.82 | 4.84 | 100% | $252,659 |
+| Fixed price | 7.02 | 39.07 | 2.16 | 0% | $325,149 |
+| **Markdown (≤2 days 20%, ≤1 day 40%)** | **0.05** | **40.87** | 4.23 | 15.3% | $336,858 |
+| Blanket 30% off | 0.02 | **19.30** | 9.56 | 100% | $275,243 |
+| Markdown, half shopper response | 0.63 | 40.35 | 3.62 | 14.6% | $330,212 |
+| Blanket, half shopper response | 0.50 | 18.88 | 5.01 | 100% | $254,825 |
 
 Markdown versus fixed, averaged over 10 seeds:
 
 | Metric | Mean | 95% CI |
 |---|---|---|
-| Waste reduction | 99.34% | 99.07 – 99.61% |
-| Net margin change | +1.76 pts | +1.56 – +1.96 pts |
-| Profit change | +8.23% | win rate 10/10 seeds |
-| Revenue change | +3.56% | |
+| Waste reduction | 99.23% | 98.80 – 99.66% |
+| Net margin change | +1.81 pts | +1.60 – +2.02 pts |
+| Profit change | +8.40% | win rate 10/10 seeds |
+| Revenue change | +3.60% | |
 
 **The headline:** a targeted markdown rule removes almost all waste *and* lifts
 margin. Discounting everything also removes waste — and halves the margin, from
@@ -137,7 +144,7 @@ where the starting value was changed.
 |---|---|---|---|
 | A1 | Shelf lives | 2–12 days by category | Typical retail best-before/use-by windows per item type; real values vary by supplier and storage |
 | A2 | Baseline daily demand λ | 8–60 units/day per SKU | Plausible mid-size supermarket volume per SKU; the scale does not change any percentage |
-| A3 | Weekday shape | 50% UCI + 50% grocery prior | The UCI Online Retail II extract is a **B2B gift wholesaler**, a weak proxy, blended with a documented grocery prior. **The UCI data is not ingested yet** — the app currently uses the prior only and says so |
+| A3 | Weekday shape | 50% UCI + 50% grocery prior | The UCI Online Retail II extract (a **B2B gift wholesaler**, a weak proxy) is generated by `scripts/build_weekday_index.py` and blended with a documented grocery prior. Its Saturday is imputed from Friday/Sunday, because the source barely trades on Saturdays |
 | A4 | Demand noise σ | 0.20 | Daily SKU demand typically fluctuates ~15–30% around the forecast |
 | A5 | Price sensitivity e | 1.2–2.0 by category | Promotion elasticities are larger in magnitude than everyday-price elasticities; staples lower, impulse items higher |
 | A6 | Trade-down κ | 1.5 | A 20% discount moves ~30% of shoppers to the cheaper batch. Assumed, no ground truth |
@@ -157,8 +164,8 @@ where the starting value was changed.
   reduction looks so large).
 - Baskets: one shopper buys one unit of one product.
 - Cross-product substitution, staff costs, and disposal fees.
-- A real UCI weekday extract: the prior shape is used until the script in
-  `scripts/build_weekday_index.py` is run.
+- A grocery-representative weekday shape: the UCI extract is a B2B wholesaler,
+  so it is a weak proxy and is halved against a documented grocery prior.
 
 ---
 

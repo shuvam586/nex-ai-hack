@@ -32,7 +32,7 @@ export const ASSUMPTIONS: Assumption[] = [
     id: "A3",
     assumption: "Weekday shape",
     value: "50% UCI + 50% grocery prior",
-    why: "The UCI Online Retail II extract is a B2B gift wholesaler — a weak proxy — blended with a documented grocery prior. The UCI data is not ingested yet, so the prior is used.",
+    why: "The UCI Online Retail II extract is a B2B gift wholesaler — a weak proxy — blended with a documented grocery prior. Its Saturday is imputed from Friday/Sunday, because the source barely trades on Saturdays.",
     sensitivity: "flat / prior / blend",
   },
   {

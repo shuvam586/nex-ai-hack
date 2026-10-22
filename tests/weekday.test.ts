@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORY_PRIOR, dowOf, normalizeToMeanOne, weekdayShape } from "@/sim/weekday";
+import {
+  CATEGORY_PRIOR,
+  WEEKDAY_INDEX,
+  dowOf,
+  normalizeToMeanOne,
+  weekdayShape,
+} from "@/sim/weekday";
 import { CATEGORIES } from "@/sim/types";
+
+describe("the ingested UCI weekday index", () => {
+  it("is either absent or a normalized 7-day vector with a source", () => {
+    // A null index (data not generated) is a valid state — the app falls back
+    // to the prior and says so. When present, it must be well-formed.
+    if (WEEKDAY_INDEX.monToSun === null) return;
+    expect(WEEKDAY_INDEX.monToSun).toHaveLength(7);
+    const mean = WEEKDAY_INDEX.monToSun.reduce((sum, value) => sum + value, 0) / 7;
+    expect(mean).toBeCloseTo(1, 2);
+    expect(WEEKDAY_INDEX.source).toBeTruthy();
+  });
+});
 
 describe("dowOf", () => {
   it("maps absolute day 7 to Monday", () => {

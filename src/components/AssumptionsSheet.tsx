@@ -129,8 +129,9 @@ export function AssumptionsSheet() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                The UCI extract is not ingested yet, so the blend currently falls back to the prior
-                — the app says so rather than claim the data.
+                The blend is 50% UCI Online Retail II + 50% grocery prior. The source is a B2B
+                wholesaler with almost no Saturday trade, so Saturday is imputed from Friday and
+                Sunday.
               </p>
             </div>
           </div>
