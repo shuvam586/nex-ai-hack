@@ -11,8 +11,20 @@ import type { Category, Product, SimParams } from "./types";
 /**
  * 20 perishables (plans/01 §3).
  *
+ * Every field below is an assumption, and the same assumptions apply to every
+ * row — they are repeated per product so the table stands on its own:
+ *
+ *   shelfLife        A1  days before the batch expires
+ *   unitCost         A14 cost of one unit (waste is valued at this)
+ *   basePrice        A14 shelf price; the margin comes from the pair
+ *   avgDailyDemand   A2  baseline shoppers per day (λ)
+ *   priceSensitivity A5  price elasticity (e)
+ *   packSize         —   units per order pack
+ *   deliveryInterval —   days between deliveries
+ *   deliveryPhase    —   staggers deliveries; `day % interval === phase`
+ *
  * `deliveryPhase` staggers deliveries so orders do not all land on the same
- * day; a delivery arrives when `day % deliveryInterval === deliveryPhase`.
+ * day.
  */
 export const CATALOG: Product[] = [
   // Bakery
@@ -21,8 +33,8 @@ export const CATALOG: Product[] = [
     name: "White bread loaf",
     category: "Bakery",
     shelfLife: 3, // A1
-    unitCost: 1.14,
-    basePrice: 2.0,
+    unitCost: 1.14, // A14
+    basePrice: 2.0, // A14
     avgDailyDemand: 40, // A2
     priceSensitivity: 1.8, // A5
     packSize: 10,
@@ -305,13 +317,13 @@ export const SAFETY_BY_CATEGORY: Record<Category, number> = {
 export const DEFAULT_PARAMS: SimParams = {
   seed: 42,
   days: 30, // reported window (plans/01 §1)
-  warmupDays: 7, // discarded, so the store starts in steady state
-  responseScale: 1, // s
+  warmupDays: 7, // discarded, so the store starts in steady state (plans/01 §1)
+  responseScale: 1, // s — scales both h and N1 (A5, A6, A7)
   tradeDownK: 1.5, // κ (A6)
   dealReach: 0.4, // ρ (A7)
   demandSigma: 0.2, // σ (A4)
-  overorderScale: 1, // multiplies SAFETY_BY_CATEGORY
+  overorderScale: 1, // multiplies SAFETY_BY_CATEGORY (A8)
   shelfLifeShift: 0, // ±1 day (A1)
   demandScale: 1, // multiplies λ (A2)
-  weekdayMode: "uci", // blends the UCI shape with the grocery prior (plans/04 §1.3)
+  weekdayMode: "uci", // blends the UCI shape with the grocery prior (A3, plans/04 §1.3)
 };

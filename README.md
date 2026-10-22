@@ -12,9 +12,10 @@ and margin.
 
 Everything is seeded: the same seed gives the same numbers on any machine.
 
-> **Status:** the simulation core is complete and tested (plans/01, plans/02).
-> The dashboard (plans/03), the stretch goals (plans/04) and the deploy/demo
-> pack (plans/05) are not built yet.
+> **Status:** the simulation core (plans/01) and the app architecture (plans/02)
+> are complete and tested. The dashboard runs live numbers from the worker.
+> The charts and tabs of plans/03, the stretch goals of plans/04 and the
+> deploy/demo pack of plans/05 are not built yet.
 
 ---
 
@@ -48,11 +49,30 @@ src/sim/            pure TypeScript, no React, no DOM (runs in Node and in a wor
   engine.ts         the daily loop
   metrics.ts        accounting and aggregation
   runner.ts         runSim, runSeeds, comparePolicies
+  api.ts            the surface the UI calls
   worker.ts         Comlink entry point
   mock.ts           a hand-made result for building the UI against
-tests/              Vitest: units, invariants, calibration, performance
+src/store/          useSimStore — zustand store, worker wiring, URL sync
+src/lib/            format.ts (view-layer numbers), urlState.ts, kpis.ts, assumptions.ts
+src/components/     TopBar, ControlsRail, KpiPair, VerdictBanner, Dashboard, …
+src/app/            the dashboard route, layout, palette and favicon
+tests/              Vitest: units, invariants, calibration, performance, the store
 docs/               the plan files this repo was built from
 ```
+
+### How the app is wired
+
+- The **seed, the two markdown tiers and the shopper-response scale live in the
+  URL**: `/?seed=42&t1=2&d1=20&t2=1&d2=40&s=1`. The server reads it, the store
+  keeps it, and every change rewrites the query string with
+  `history.replaceState` — so a link always reproduces the numbers.
+- The **simulation runs in a Web Worker** (Comlink). If the worker cannot be
+  created — or fails mid-run — the same pure functions run on the main thread
+  instead.
+- Slider changes are **debounced at 120 ms**, and a request counter throws away
+  the answer of a run that has already been superseded.
+- Numbers are **plain numbers in the simulation** and are only formatted in
+  `src/lib/format.ts`, at the view layer.
 
 ---
 
@@ -146,10 +166,15 @@ where the starting value was changed.
 
 ```bash
 npm install
-npm test          # units, the 9 invariants, calibration, performance
-npm run typecheck # next typegen && tsc --noEmit
+npm run dev        # the dashboard at http://localhost:3000
+npm test           # units, the 9 invariants, calibration, performance, the store
+npm run typecheck  # next typegen && tsc --noEmit
 npm run lint
 ```
+
+The dashboard starts with the seed in the URL. Change the seed, move a slider,
+or open a link like `/?seed=7&t1=3&d1=25&t2=1&d2=60&s=1` — the numbers move
+with it, and the link always reproduces them.
 
 Print the calibration tables and the policy comparison:
 
@@ -169,6 +194,20 @@ runSeeds(DEFAULT_PARAMS, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], DEFAULT_MARKDOWN_POLIC
 comparePolicies(DEFAULT_PARAMS, DEFAULT_MARKDOWN_POLICY);
 ```
 
+## Deploying
+
+Vercel picks the framework up on its own — there is no build override and
+there are no environment variables or secrets in this project.
+
+1. Import the repository at **vercel.com/new** and accept the defaults
+   (Next.js, `npm run build`).
+2. Deploy. The URL is `https://<project>.vercel.app`.
+3. Tag the deploy once the MVP is live: `git tag mvp && git push origin mvp`.
+
+After deploying, check the live URL in a private window: the seed must be in
+the address bar, the four KPI cards must show both policies, and reloading the
+same URL must reproduce the same numbers.
+
 ## How it is tested
 
 - **Determinism** — same seed ⇒ identical output; different seed ⇒ different output.
@@ -182,6 +221,10 @@ comparePolicies(DEFAULT_PARAMS, DEFAULT_MARKDOWN_POLICY);
 - **No `Math.random`** in `src/sim` — enforced by an ESLint rule *and* a grep test.
 - **Calibration** — the baseline must stay inside the numeric targets of
   plans/01 §10, or the test fails.
+- **The store** — it computes a comparison on creation, recomputes when the
+  seed, a tier or the response scale changes, and runs the multi-seed
+  evaluation. The fallback path (simulation on the main thread) is what the
+  tests exercise, because Node has no `Worker`.
 
 ## Plan documents
 
