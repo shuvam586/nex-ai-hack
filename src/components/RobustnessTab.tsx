@@ -3,6 +3,7 @@
 /**
  * The robustness tab (plans/03 §6): the judges' "does it hold up?" screen.
  *
+ 
  * Three questions, in order of how much they cost us if we are wrong:
  * does the result survive ten seeds, does it survive shoppers responding half
  * as strongly, and which assumption can flip it. All three run in the worker
