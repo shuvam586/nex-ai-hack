@@ -4,18 +4,24 @@ import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiPair } from "@/components/KpiPair";
 import { VerdictBanner } from "@/components/VerdictBanner";
+import { TradeoffScatter } from "@/components/TradeoffScatter";
+import { DailyComposedChart } from "@/components/DailyComposedChart";
+import { CategoryBars } from "@/components/CategoryBars";
 import { buildKpis } from "@/lib/kpis";
 import { useSimStore } from "@/store/useSimStore";
 
 /**
- * The money screen: waste and margin side by side, never one without the
- * other.
+ * The money screen (plans/03 §3): waste and margin side by side, never one
+ * without the other.
  *
- * A rule that cuts waste but eats margin has to look like that on the same
- * screen, which is the whole point of the project.
+ * Row 1 is four KPI pairs; row 2 is the trade-off scatter and the daily
+ * timeline; row 3 is the category breakdown. A rule that cuts waste but eats
+ * margin has to look like that on the same screen, which is the whole point of
+ * the project.
  */
 export function OverviewTab() {
   const comparison = useSimStore((state) => state.comparison);
+  const extras = useSimStore((state) => state.extras);
   const loading = useSimStore((state) => state.loading);
   const error = useSimStore((state) => state.error);
   const seed = useSimStore((state) => state.seed);
@@ -38,18 +44,25 @@ export function OverviewTab() {
 
   if (!comparison) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {["Units wasted", "Revenue", "Profit", "Net margin"].map((title) => (
-          <KpiPair
-            key={title}
-            title={title}
-            fixedValue=""
-            markdownValue=""
-            delta=""
-            tone="flat"
-            loading
-          />
-        ))}
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {["Units wasted", "Revenue", "Profit", "Net margin"].map((title) => (
+            <KpiPair
+              key={title}
+              title={title}
+              fixedValue=""
+              markdownValue=""
+              delta=""
+              tone="flat"
+              loading
+            />
+          ))}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <TradeoffScatter comparison={null} extras={null} loading />
+          <DailyComposedChart comparison={null} loading />
+        </div>
+        <CategoryBars comparison={null} loading />
       </div>
     );
   }
@@ -70,7 +83,6 @@ export function OverviewTab() {
         seed={seed}
         wasteReduction={wasteReduction}
         profitChange={profitChange}
-        loading={loading && false}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -87,6 +99,13 @@ export function OverviewTab() {
           />
         ))}
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TradeoffScatter comparison={comparison} extras={extras} />
+        <DailyComposedChart comparison={comparison} />
+      </div>
+
+      <CategoryBars comparison={comparison} />
     </div>
   );
 }

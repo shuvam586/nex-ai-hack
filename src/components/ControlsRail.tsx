@@ -3,6 +3,8 @@
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { CategoryOverrides } from "@/components/CategoryOverrides";
 import { useSimStore, useTiers } from "@/store/useSimStore";
 import type { Tier } from "@/sim/types";
 
@@ -42,6 +44,8 @@ export function ControlsRail() {
   const setPolicy = useSimStore((state) => state.setPolicy);
   const responseScale = useSimStore((state) => state.params.responseScale);
   const setResponseScale = useSimStore((state) => state.setResponseScale);
+  const overridesEnabled = useSimStore((state) => state.overridesEnabled);
+  const setOverridesEnabled = useSimStore((state) => state.setOverridesEnabled);
 
   return (
     <aside className="w-full shrink-0 border-b bg-card p-4 lg:w-72 lg:border-r lg:border-b-0">
@@ -137,6 +141,27 @@ export function ControlsRail() {
           How strongly shoppers react to a discount. At 0.5× they barely notice
           it.
         </p>
+      </div>
+
+      <div className="mt-6 space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="overrides" className="text-xs">
+            Per-category override
+          </Label>
+          <Switch
+            id="overrides"
+            checked={overridesEnabled}
+            onCheckedChange={(checked) => setOverridesEnabled(checked)}
+          />
+        </div>
+        {overridesEnabled ? (
+          <CategoryOverrides />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            One rule for every category. Turn this on to tune categories separately, or apply an
+            optimised rule from the Optimize tab.
+          </p>
+        )}
       </div>
     </aside>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,6 +109,10 @@ export function TopBar() {
         </Tooltip>
 
         <AssumptionsSheet />
+
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/deals?seed=${seed}`}>Deals ↗</Link>
+        </Button>
       </div>
     </header>
   );

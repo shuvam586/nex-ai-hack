@@ -149,3 +149,58 @@ export interface EvalResult {
     revenueChangePct: number;
   }[];
 }
+
+/** The extra runs the Overview trade-off chart needs (plans/03 §3). */
+export interface TradeoffExtras {
+  /** The reference "discount everything" point. */
+  blanket: { waste: number; profit: number };
+  /** The markdown rule swept over discount depth 0…60% (13 points). */
+  sweep: { discount: number; waste: number; profit: number }[];
+}
+
+/** One assumption's low/high arm in the tornado (plans/04 §3.2). */
+export interface SensitivityScenario {
+  id: string;
+  parameter: string;
+  lowLabel: string;
+  highLabel: string;
+  wasteReductionLow: number; // fraction, mean over seeds
+  wasteReductionHigh: number;
+  profitChangeLow: number; // fraction, mean over seeds
+  profitChangeHigh: number;
+}
+
+export interface SensitivityResult {
+  /** Sorted by impact on profit change, largest first. */
+  scenarios: SensitivityScenario[];
+  baselineWasteReduction: number;
+  baselineProfitChange: number;
+  /** Scenarios (arms counted individually) where waste falls / profit improves. */
+  wasteFallsIn: number;
+  profitImprovesIn: number;
+  total: number;
+}
+
+/** One (tiers, profit, waste) point the optimiser tried, for the Pareto scatter. */
+export interface OptimizeTried {
+  tiers: Tier[];
+  profit: number;
+  waste: number;
+}
+
+/** Best 2-step rule found for one category (plans/04 §2). */
+export interface CategoryOpt {
+  category: Category;
+  best: Tier[];
+  trainProfitGainPct: number;
+  testProfitGainPct: number;
+  wasteReductionPct: number; // on the held-out seeds
+  tried: OptimizeTried[]; // train-seed points
+}
+
+export interface OptimizeResult {
+  categories: CategoryOpt[];
+  trainSeeds: number[];
+  testSeeds: number[];
+  weight: number; // $ per wasted unit in the objective
+}

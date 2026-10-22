@@ -1,32 +1,21 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+/**
+ * The dashboard shell (plans/03 §2).
+ *
+ * Five tabs: the money screen, the per-product view, the timeline, the
+ * robustness checks and the optimiser. Everything hangs off the same store, so
+ * the seed and the rule in the left rail govern every tab.
+ */
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TopBar } from "@/components/TopBar";
 import { ControlsRail } from "@/components/ControlsRail";
 import { OverviewTab } from "@/components/OverviewTab";
-
-/**
- * The dashboard shell (plans/03 §2).
- *
- * The tabs that are not built yet say so plainly rather than pretending to
- * have data — a judge should never have to guess whether a number is real.
- */
-function Pending({ title, spec }: { title: string; spec: string }) {
-  return (
-    <Card className="border-dashed">
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          This tab is specified in <span className="font-mono text-xs">{spec}</span> and is
-          not built yet. The simulation behind it already works — see the Overview tab.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+import { ProductsTab } from "@/components/ProductsTab";
+import { TimelineTab } from "@/components/TimelineTab";
+import { RobustnessTab } from "@/components/RobustnessTab";
+import { OptimizeTab } from "@/components/OptimizeTab";
 
 export function Dashboard() {
   return (
@@ -50,16 +39,16 @@ export function Dashboard() {
               <OverviewTab />
             </TabsContent>
             <TabsContent value="products">
-              <Pending title="Per-product view" spec="plans/03 §4" />
+              <ProductsTab />
             </TabsContent>
             <TabsContent value="timeline">
-              <Pending title="Markdown heatmap" spec="plans/03 §5" />
+              <TimelineTab />
             </TabsContent>
             <TabsContent value="robustness">
-              <Pending title="10-seed evaluation and tornado chart" spec="plans/03 §6" />
+              <RobustnessTab />
             </TabsContent>
             <TabsContent value="optimize">
-              <Pending title="Best discount steps per category" spec="plans/03 §7" />
+              <OptimizeTab />
             </TabsContent>
           </Tabs>
         </main>
