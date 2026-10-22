@@ -9,13 +9,14 @@
  * and are kicked off when the tab is opened.
  */
 
-import { useEffect } from "react";
-import { useSimStore } from "@/store/useSimStore";
+import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_EVAL_SEEDS, useSimStore } from "@/store/useSimStore";
 import { EvalCard } from "@/components/EvalCard";
 import { ResponseCompare } from "@/components/ResponseCompare";
 import { TornadoChart } from "@/components/TornadoChart";
 
 export function RobustnessTab() {
+  const seed = useSimStore((state) => state.seed);
   const evalResult = useSimStore((state) => state.evalResult);
   const responseCompare = useSimStore((state) => state.responseCompare);
   const sensitivity = useSimStore((state) => state.sensitivity);
@@ -23,21 +24,45 @@ export function RobustnessTab() {
   const runEvaluation = useSimStore((state) => state.runEvaluation);
   const runResponseCompare = useSimStore((state) => state.runResponseCompare);
   const runSensitivity = useSimStore((state) => state.runSensitivity);
+  const [evaluationMode, setEvaluationMode] = useState<"benchmark" | "current">("benchmark");
 
-  // Kick the work off the first time the tab is shown; the buttons re-run it.
+  const evaluationSeeds = useMemo(
+    () =>
+      evaluationMode === "benchmark"
+        ? DEFAULT_EVAL_SEEDS
+        : Array.from({ length: 10 }, (_, index) => seed + index),
+    [evaluationMode, seed],
+  );
+  const evaluationKey = evaluationSeeds.join(",");
+  const resultKey = evalResult?.seeds.join(",");
+
+  // Run whenever the selected range differs from the result currently shown.
   useEffect(() => {
     if (task) return;
-    if (!evalResult) void runEvaluation();
+    if (resultKey !== evaluationKey) void runEvaluation(evaluationSeeds);
     if (!responseCompare) void runResponseCompare();
     if (!sensitivity) void runSensitivity();
-  }, [evalResult, responseCompare, sensitivity, task, runEvaluation, runResponseCompare, runSensitivity]);
+  }, [
+    evaluationKey,
+    evaluationSeeds,
+    responseCompare,
+    resultKey,
+    runEvaluation,
+    runResponseCompare,
+    runSensitivity,
+    sensitivity,
+    task,
+  ]);
 
   return (
     <div className="space-y-4">
       <EvalCard
         result={evalResult}
         loading={task?.kind === "evaluation"}
-        onRun={() => void runEvaluation()}
+        mode={evaluationMode}
+        seeds={evaluationSeeds}
+        onModeChange={setEvaluationMode}
+        onRun={() => void runEvaluation(evaluationSeeds)}
       />
       <ResponseCompare
         rows={responseCompare}
