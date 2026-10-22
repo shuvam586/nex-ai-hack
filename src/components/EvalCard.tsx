@@ -42,10 +42,16 @@ function range(stat: SeedStat, format: (value: number) => string): string {
 export function EvalCard({
   result,
   loading,
+  mode,
+  seeds,
+  onModeChange,
   onRun,
 }: {
   result: EvalResult | null;
   loading: boolean;
+  mode: "benchmark" | "current";
+  seeds: number[];
+  onModeChange: (mode: "benchmark" | "current") => void;
   onRun: () => void;
 }) {
   const chartData =
@@ -58,13 +64,38 @@ export function EvalCard({
   return (
     <ChartCard
       title="Does it hold across seeds?"
-      description="Fixed vs markdown over ten seeds. The interval is the honest part."
+      description={`Fixed vs markdown over seeds ${seeds[0]}–${seeds[seeds.length - 1]}. The interval is the honest part.`}
       action={
-        <Button size="sm" variant="outline" onClick={onRun} disabled={loading}>
-          {loading ? "Running…" : "Re-run"}
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex rounded-md border bg-background p-0.5" aria-label="Evaluation seed range">
+            <Button
+              size="sm"
+              variant={mode === "benchmark" ? "default" : "ghost"}
+              onClick={() => onModeChange("benchmark")}
+              disabled={loading}
+            >
+              Benchmark
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === "current" ? "default" : "ghost"}
+              onClick={() => onModeChange("current")}
+              disabled={loading}
+            >
+              Current-seed range
+            </Button>
+          </div>
+          <Button size="sm" variant="outline" onClick={onRun} disabled={loading}>
+            {loading ? "Running…" : "Re-run"}
+          </Button>
+        </div>
       }
     >
+      <p className="mb-3 text-xs text-muted-foreground">
+        {mode === "benchmark"
+          ? "Stable benchmark: always uses seeds 1–10, independent of the dashboard seed."
+          : `Current-seed range: uses seed ${seeds[0]} and the next nine seeds.`}
+      </p>
       {loading || !result ? (
         <Skeleton className="h-56 w-full" />
       ) : (
